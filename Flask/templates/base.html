@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Availability Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <h1><strong>STC Build Your Future - Availability Dashboard</h1>
+            {% if current_user.is_authenticated %}
+           <!-- In base.html, modify the user-info div -->
+<div class="user-info">
+    <span>{{ current_user.username }}</span>
+    {% if current_user.role == 'admin' %}
+    <span class="admin-badge">Admin</span>
+    {% endif %}
+    <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+</div>
+            {% endif %}
+        </div>
+    </header>
+    
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer>
+        <div class="container text-center">
+            <p>&copy; 2025 MSA STC Availability Dashboard</p>
+        </div>
+    </footer>
+    
+    <!-- Add this right before </body> in base.html -->
+{% block scripts %}
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+<script>
+    // Initialize SocketIO connection
+    const socket = io();
+    
+    // Handle status updates from server
+    socket.on('status_update', function(data) {
+        console.log('Status update received:', data);
+        
+        // Update the specific grid square
+        const squareElement = document.querySelector(`.grid-square[data-id="${data.square_id}"]`);
+        if (squareElement) {
+            // Update status attribute
+            squareElement.setAttribute('data-status', data.status);
+            
+            // Update background color based on status
+            const statusColors = {
+                0: '#ffebee', // Busy - red
+                1: '#fff8e1', // Almost Ready - yellow
+                2: '#e8f5e9'  // Available - green
+            };
+            squareElement.style.backgroundColor = statusColors[data.status];
+            
+            // Update status text if element exists
+            const statusTextElement = squareElement.querySelector('.status-text');
+            if (statusTextElement) {
+                const statusTexts = ['Busy', 'Almost Ready', 'Available'];
+                statusTextElement.textContent = statusTexts[data.status];
+                
+                // Update status text class
+                statusTextElement.className = 'status-text ' + [
+                    'status-busy', 
+                    'status-almost', 
+                    'status-available'
+                ][data.status];
+            }
+            
+            // Update user info if element exists
+            const userElement = squareElement.querySelector('.square-user');
+            if (userElement) {
+                userElement.textContent = data.username;
+            }
+        }
+    });
+    
+    // Status button click handler
+    document.querySelectorAll('.status-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const status = parseInt(this.getAttribute('data-status'));
+            
+            fetch('/api/update_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.success) {
+                    console.error('Error:', data.message);
+                    alert('Failed to update status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating status');
+            });
+        });
+    });
+</script>
+</body>
+</html>

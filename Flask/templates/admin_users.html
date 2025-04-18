@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-users-wrapper">
+    <div class="admin-users-header">
+        <h2>User Management</h2>
+        <div class="admin-users-actions">
+            <a href="{{ url_for('create_user') }}" class="btn btn-primary">Create New User</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="users-grid">
+        {% for user in users %}
+        <div class="user-card">
+            <div class="card-header">
+                <h3>{{ user.username }}</h3>
+                <span class="role-badge {% if user.role == 'admin' %}admin{% else %}user{% endif %}">
+                    {{ user.role|title }}
+                </span>
+            </div>
+            <div class="card-body">
+                {% if user.grid_square %}
+                <p class="grid-square">Assigned to: {{ user.grid_square.name }}</p>
+                {% else %}
+                <p class="grid-square unassigned">Unassigned</p>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn edit-btn">Edit</a>
+                <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" class="delete-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn delete-btn" onclick="return confirm('Are you sure?')">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    /* Reset any container constraints */
+    .admin-users-wrapper {
+        width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    
+    .admin-users-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .admin-users-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    /* Grid layout */
+    .users-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Card styling */
+    .user-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .card-header {
+        padding: 15px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .card-header h3 {
+        margin: 0;
+        font-size: 18px;
+        color: #333;
+    }
+    
+    .card-body {
+        padding: 15px;
+        flex-grow: 1;
+    }
+    
+    .card-footer {
+        padding: 15px;
+        display: flex;
+        gap: 10px;
+        border-top: 1px solid #eee;
+    }
+    
+    /* Role badges */
+    .role-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-left: 8px;
+    }
+    
+    .role-badge.admin {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .role-badge.user {
+        background-color: #e8f5e9;
+        color: #388e3c;
+    }
+    
+    /* Grid square info */
+    .grid-square {
+        margin: 0;
+        font-size: 14px;
+        color: #555;
+    }
+    
+    .grid-square.unassigned {
+        color: #999;
+        font-style: italic;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        border: none;
+        flex: 1;
+    }
+    
+    .edit-btn {
+        background-color: #3498db;
+        color: white;
+    }
+    
+    .delete-btn {
+        background-color: #e74c3c;
+        color: white;
+    }
+    
+    .delete-form {
+        flex: 1;
+        display: flex;
+    }
+</style>
+{% endblock %}

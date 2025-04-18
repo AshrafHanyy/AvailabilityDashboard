@@ -1,0 +1,28 @@
+  {% extends "base.html" %}
+
+  {% block content %}
+  <div class="dashboard-wrapper">
+    <div class="controls">
+      <div class="status-buttons">
+        <button class="status-btn status-red" data-status="0">Busy</button>
+        <button class="status-btn status-yellow" data-status="1">Almost Ready</button>
+        <button class="status-btn status-green" data-status="2">Available</button>
+      </div>
+    </div>
+
+    <div class="grid-container">
+      {% for square in grid_squares %}
+      <div class="grid-square {% if square.id == user_square.id %}my-square{% endif %}" 
+          data-id="{{ square.id }}" 
+          data-status="{{ square.status }}">
+        <div class="square-content">
+          <div class="square-name">{{ square.name }}</div>
+          {% if square.assigned_user %}
+          <div class="square-user">{{ square.assigned_user.username }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endblock %}

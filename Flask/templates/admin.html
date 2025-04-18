@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Admin controls at the top -->
+    <div class="admin-controls">
+        <div class="status-buttons">
+            <button class="status-btn status-red" data-status="0">Busy</button>
+            <button class="status-btn status-yellow" data-status="1">Almost Ready</button>
+            <button class="status-btn status-green" data-status="2">Available</button>
+        </div>
+        
+        <div class="admin-actions">
+            <div class="filter-buttons">
+                <button class="filter-btn" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="0">Busy</button>
+                <button class="filter-btn" data-filter="1">Almost Ready</button>
+                <button class="filter-btn" data-filter="2">Available</button>
+            </div>
+            <button id="export-btn" class="btn btn-primary">Export CSV</button>
+            <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Manage Users</a>
+        </div>
+    </div>
+
+    <!-- Identical grid squares to user view -->
+    <div class="grid-container">
+        {% for square in grid_squares %}
+        <div class="grid-square {% if square.id == user_square.id %}my-square{% endif %}" 
+             data-id="{{ square.id }}" 
+             data-status="{{ square.status }}"
+             style="background-color: {% if square.status == 0 %}#ff6b6b{% elif square.status == 1 %}#ffd166{% else %}#06d6a0{% endif %}">
+            <div class="square-content">
+                <div class="square-name">{{ square.name }}</div>
+                <div class="status-text {% if square.status == 0 %}status-busy{% elif square.status == 1 %}status-almost{% else %}status-available{% endif %}">
+                    {% if square.status == 0 %}Busy{% elif square.status == 1 %}Almost Ready{% else %}Available{% endif %}
+                </div>
+                {% if square.assigned_user %}
+                <div class="square-user">
+                    {{ square.assigned_user.username }}
+                    {% if square.assigned_user.role == 'admin' %}
+                    <span class="admin-badge">Admin</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    /* Admin controls styling */
+    .admin-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .admin-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .filter-btn {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+    }
+    
+    /* EXACTLY match user dashboard grid styling */
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: repeat(6, 1fr);
+        gap: 6px;
+        width: 90vmin;
+        height: 90vmin;
+        max-width: 800px;
+        max-height: 800px;
+        margin: 0 auto;
+        padding: 6px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .grid-square {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1/1;
+        border-radius: 4px;
+        transition: all 0.2s;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        position: relative;
+    }
+    
+    .grid-square:hover {
+        transform: scale(1.03);
+        z-index: 1;
+    }
+    
+    /* Status colors - match user dashboard */
+    .grid-square[data-status="0"] {
+        background-color: #ff6b6b;
+        color: white;  
+    }
+    
+    .grid-square[data-status="1"] {
+        background-color: #ffd166;
+        color: #212529;
+    }
+    
+    .grid-square[data-status="2"] {
+        background-color: #06d6a0;
+        color: #212529;
+    }
+    
+    /* Current user's square */
+    .my-square {
+        outline: 3px solid #4361ee;
+        outline-offset: -3px;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(67, 97, 238, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0); }
+    }
+    
+    /* Square content */
+    .square-content {
+        text-align: center;
+        padding: 0.25rem;
+        width: 100%;
+    }
+    
+    .square-name {
+        font-weight: bold;
+        font-size: clamp(8px, 2vw, 14px);
+    }
+    
+    .square-user {
+        font-size: clamp(6px, 1.5vw, 10px);
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .admin-badge {
+        display: inline-block;
+        background-color: #4361ee;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        margin-left: 5px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .grid-container {
+            width: 95vmin;
+            height: 95vmin;
+            gap: 4px;
+            padding: 4px;
+        }
+        
+        .admin-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .admin-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-buttons {
+            justify-content: center;
+        }
+    }
+</style>
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
+<script>
+    // Filter functionality for grid squares
+    document.querySelectorAll('.filter-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            const squares = document.querySelectorAll('.grid-square');
+            
+            squares.forEach(square => {
+                if (filter === 'all') {
+                    square.style.display = 'flex';
+                } else {
+                    if (square.getAttribute('data-status') === filter) {
+                        square.style.display = 'flex';
+                    } else {
+                        square.style.display = 'none';
+                    }
+                }
+            });
+            
+            // Update active button state
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.style.fontWeight = btn === this ? 'bold' : 'normal';
+                btn.style.backgroundColor = btn === this ? '#e0e0e0' : 'white';
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}
