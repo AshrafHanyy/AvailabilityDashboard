@@ -4,9 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Define status colors
     const statusColors = {
-        0: '#ff6b6b', // red
-        1: '#ffd166', // yellow
-        2: '#06d6a0'  // green
+        0: '#ff6b6b', // red - Busy
+        1: '#ffd166', // yellow - Almost Ready
+        2: '#06d6a0'  // green - Available
     };
     
     // Initialize grid squares
@@ -34,6 +34,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (mySquare) {
                     mySquare.setAttribute('data-status', status);
                     mySquare.style.backgroundColor = statusColors[status];
+                    
+                    // Update status text if it exists
+                    const statusText = mySquare.querySelector('.status-text');
+                    if (statusText) {
+                        const statusLabels = ['Busy', 'Almost Ready', 'Available'];
+                        statusText.textContent = statusLabels[status];
+                        
+                        // Update CSS class
+                        statusText.className = 'status-text ' + [
+                            'status-busy', 
+                            'status-almost', 
+                            'status-available'
+                        ][status];
+                    }
                 }
                 
                 // Fetch updated grid data
@@ -60,6 +74,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function filterGrid(status) {
         if (status === 'all') {
             // Show all squares and fetch fresh data
+            gridSquares.forEach(square => {
+                square.style.opacity = '1';
+            });
             refreshGridData();
             return;
         }
@@ -79,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             // First, hide all squares
             gridSquares.forEach(square => {
-                square.style.opacity = '0.3';
+                square.style.opacity = '0.83';
             });
             
             // Then show only the squares with matching status
@@ -120,7 +137,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (gridSquare) {
                     gridSquare.setAttribute('data-status', square.status);
                     gridSquare.style.backgroundColor = statusColors[square.status];
-                    gridSquare.style.opacity = '1'; // Make sure all squares are visible
+                    
+                    // Update status text if it exists
+                    const statusText = gridSquare.querySelector('.status-text');
+                    if (statusText) {
+                        const statusLabels = ['Busy', 'Almost Ready', 'Available'];
+                        statusText.textContent = statusLabels[square.status];
+                        
+                        // Update CSS class
+                        statusText.className = 'status-text ' + [
+                            'status-busy', 
+                            'status-almost', 
+                            'status-available'
+                        ][square.status];
+                    }
                 }
             });
         })
@@ -137,9 +167,52 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Setup click handler for grid squares in admin view (to toggle status)
+    gridSquares.forEach(square => {
+        // Skip if this is in the user dashboard (not admin)
+        if (!document.querySelector('.admin-controls')) {
+            return;
+        }
+        
+        square.addEventListener('click', function() {
+            // Don't proceed if this is the current user's square
+            if (this.classList.contains('my-square')) {
+                return;
+            }
+            
+            const squareId = this.getAttribute('data-id');
+            const currentStatus = parseInt(this.getAttribute('data-status'));
+            
+            // Cycle through statuses: 0 -> 1 -> 2 -> 0
+            const newStatus = (currentStatus + 1) % 3;
+            
+            // Update via API
+            fetch('/api/admin_update_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    square_id: squareId,
+                    status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Failed to update status:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating status:', error);
+            });
+        });
+    });
+    
     // Initial grid data refresh
     refreshGridData();
     
-    // Set up periodic refresh every 10 seconds
-    setInterval(refreshGridData, 10000);
+    // Set up periodic refresh every 30 seconds
+    setInterval(refreshGridData, 30000);
 });

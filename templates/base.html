@@ -11,19 +11,24 @@
 <body>
     <header>
         <div class="container header-content">
-            <h1><strong>STC Build Your Future - Availability Dashboard</h1>
+            <div class="logo-wrapper">
+                <a href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='images/STC Logo FINA-0S1.svg') }}" alt="STC Logo" class="logo-img">
+                </a>
+            </div>
+            <h1><strong>STC Build Your Future - Availability Dashboard</strong></h1>
             {% if current_user.is_authenticated %}
-           <!-- In base.html, modify the user-info div -->
-<div class="user-info">
-    <span>{{ current_user.username }}</span>
-    {% if current_user.role == 'admin' %}
-    <span class="admin-badge">Admin</span>
-    {% endif %}
-    <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
-</div>
+            <div class="user-info">
+                <span>{{ current_user.username }}</span>
+                {% if current_user.role == 'admin' %}
+                <span class="admin-badge">Admin</span>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
             {% endif %}
         </div>
     </header>
+    
     
     <main class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -50,7 +55,9 @@
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='user.js') }}"></script>
 <script>
+   
     // Initialize SocketIO connection
     const socket = io();
     
@@ -66,11 +73,16 @@
             
             // Update background color based on status
             const statusColors = {
-                0: '#ffebee', // Busy - red
-                1: '#fff8e1', // Almost Ready - yellow
-                2: '#e8f5e9'  // Available - green
+                0: '#ff6b6b', // Busy - red
+                1: '#ffd166', // Almost Ready - yellow
+                2: '#06d6a0'  // Available - green
             };
             squareElement.style.backgroundColor = statusColors[data.status];
+            
+            // Reset opacity to 1 for all squares
+            document.querySelectorAll('.grid-square').forEach(square => {
+                square.style.opacity = '1';
+            });
             
             // Update status text if element exists
             const statusTextElement = squareElement.querySelector('.status-text');
@@ -89,7 +101,7 @@
             // Update user info if element exists
             const userElement = squareElement.querySelector('.square-user');
             if (userElement) {
-                userElement.textContent = data.username;
+                userElement.textContent = data.username || '';
             }
         }
     });

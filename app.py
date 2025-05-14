@@ -12,9 +12,12 @@ from models import db, User, GridSquare
 from forms import LoginForm, UserCreateForm, UserEditForm
 from config import Config
 
+
 # Initialize Flask app
 app = Flask(__name__)
 app.config.from_object(Config)
+
+
 
 # Initialize extensions
 db.init_app(app)
@@ -25,8 +28,27 @@ login_manager.login_view = 'login'
 
 # Initialize Socket.IO with simpler configuration
 # Remove eventlet dependency and use Flask's built-in server capabilities
-socketio = SocketIO(app, cors_allowed_origins="*")
+# In app.py
+# Database connection pooling (add to Config class in config.py)
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 20,
+    'max_overflow': 10,
+    'pool_timeout': 30
+}
 
+# In app.py (replace existing SocketIO init)
+socketio = SocketIO(
+    app,
+    async_mode='eventlet',
+    cors_allowed_origins="*",
+    engineio_logger=True,  # Enable to see connection attempts
+    max_http_buffer_size=10_000_000,  # Larger WebSocket packets
+    ping_timeout=120,
+    ping_interval=60,
+    websocket=True,
+    monkey_patch=True  # Critical for eventlet
+)
+socketio.SO_REUSEADDR = 1  # Allow address   
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -350,6 +372,19 @@ def admin_update_status():
         return jsonify({'success': True, 'message': 'Status updated by admin'})
     
     return jsonify({'success': False, 'message': 'Grid square not found'}), 404
-
+# Modify the __main__ block at the bottom to:
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    def get_local_ip():
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '0.0.0.0'  # Bind to all interfaces
+        finally:
+            s.close()
+        return IP
+    port = 94
+    print(f"\nAccess the app at: http://{get_local_ip()}:{port}")
+    socketio.run(app, host='0.0.0.0', port=port, debug=False)

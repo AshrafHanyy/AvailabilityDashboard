@@ -1,9 +1,35 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Handle status button clicks
-    document.querySelectorAll('.status-btn').forEach(button => {
+    const statusButtons = document.querySelectorAll('.status-btn');
+    
+    statusButtons.forEach(button => {
         button.addEventListener('click', function() {
             const status = this.getAttribute('data-status');
+            
+            // Update status via API
             updateUserStatus(status);
+            
+            // Highlight the active button
+            statusButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Ensure full opacity for all squares
+            document.querySelectorAll('.grid-square').forEach(square => {
+                square.style.opacity = '1';
+            });
+        });
+
+        // Add visual feedback for button presses
+        button.addEventListener('mousedown', function() {
+            this.style.transform = 'scale(0.95)';
+        });
+        
+        button.addEventListener('mouseup', function() {
+            this.style.transform = '';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = '';
         });
     });
 
@@ -21,8 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 console.log('Status updated successfully');
-                // Note: We don't need to update the UI manually here
-                // since we'll receive a socket update from the server
+                // The socket update will handle the UI changes
             } else {
                 console.error('Error updating status:', data.message);
                 alert('Failed to update status: ' + data.message);
@@ -34,23 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Add visual feedback for status buttons
-    const statusButtons = document.querySelectorAll('.status-btn');
-    statusButtons.forEach(button => {
-        button.addEventListener('mousedown', function() {
-            this.style.transform = 'scale(0.95)';
-        });
-        
-        button.addEventListener('mouseup', function() {
-            this.style.transform = '';
-        });
-        
-        button.addEventListener('mouseleave', function() {
-            this.style.transform = '';
-        });
-    });
-    
-    // Highlight active status based on user's current status
+    // Highlight current status button on load
     const userSquare = document.querySelector('.my-square');
     if (userSquare) {
         const currentStatus = userSquare.getAttribute('data-status');
@@ -58,5 +67,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (activeButton) {
             activeButton.classList.add('active');
         }
+        
+        // Ensure full opacity on load
+        document.querySelectorAll('.grid-square').forEach(square => {
+            square.style.opacity = '1';
+        });
     }
 });

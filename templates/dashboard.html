@@ -1,28 +1,226 @@
-  {% extends "base.html" %}
+{% extends "base.html" %}
 
-  {% block content %}
-  <div class="dashboard-wrapper">
-    <div class="controls">
-      <div class="status-buttons">
-        <button class="status-btn status-red" data-status="0">Busy</button>
-        <button class="status-btn status-yellow" data-status="1">Almost Ready</button>
-        <button class="status-btn status-green" data-status="2">Available</button>
-      </div>
-    </div>
-
-    <div class="grid-container">
-      {% for square in grid_squares %}
-      <div class="grid-square {% if square.id == user_square.id %}my-square{% endif %}" 
-          data-id="{{ square.id }}" 
-          data-status="{{ square.status }}">
-        <div class="square-content">
-          <div class="square-name">{{ square.name }}</div>
-          {% if square.assigned_user %}
-          <div class="square-user">{{ square.assigned_user.username }}</div>
-          {% endif %}
-        </div>
-      </div>
-      {% endfor %}
+{% block content %}
+<div class="dashboard-wrapper">
+  <div class="controls">
+    <div class="status-buttons">
+      <button class="status-btn status-red" data-status="0">Busy</button>
+      <button class="status-btn status-yellow" data-status="1">Almost Ready</button>
+      <button class="status-btn status-green" data-status="2">Available</button>
     </div>
   </div>
-  {% endblock %}
+
+  <div class="u-grid-container">
+    <!-- Top square -->
+    {% set top_square = grid_squares[0] if grid_squares|length > 0 else None %}
+    {% if top_square %}
+    <div class="grid-square top-square {% if top_square.id == user_square.id %}my-square{% endif %}" 
+        data-id="{{ top_square.id }}" 
+        data-status="{{ top_square.status }}"
+        style="background-color: {% if top_square.status == 0 %}var(--color-red){% elif top_square.status == 1 %}var(--color-yellow){% else %}var(--color-green){% endif %}">
+      <div class="square-content">
+        <div class="square-name">{{ top_square.name }}</div>
+        <div class="status-text {% if top_square.status == 0 %}status-busy{% elif top_square.status == 1 %}status-almost{% else %}status-available{% endif %}">
+          {% if top_square.status == 0 %}Busy{% elif top_square.status == 1 %}Almost Ready{% else %}Available{% endif %}
+        </div>
+        {% if top_square.assigned_user %}
+        <div class="square-user">{{ top_square.assigned_user.username }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Side squares container -->
+    <div class="side-containers">
+      <!-- Left side squares -->
+      <div class="side-squares left-squares">
+        {% for i in range(1, 4) %}
+          {% set square = grid_squares[i] if i < grid_squares|length else None %}
+          {% if square %}
+          <div class="grid-square side-square {% if square.id == user_square.id %}my-square{% endif %}" 
+              data-id="{{ square.id }}" 
+              data-status="{{ square.status }}"
+              style="background-color: {% if square.status == 0 %}var(--color-red){% elif square.status == 1 %}var(--color-yellow){% else %}var(--color-green){% endif %}">
+            <div class="square-content">
+              <div class="square-name">{{ square.name }}</div>
+              <div class="status-text {% if square.status == 0 %}status-busy{% elif square.status == 1 %}status-almost{% else %}status-available{% endif %}">
+                {% if square.status == 0 %}Busy{% elif square.status == 1 %}Almost Ready{% else %}Available{% endif %}
+              </div>
+              {% if square.assigned_user %}
+              <div class="square-user">{{ square.assigned_user.username }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <!-- Right side squares -->
+      <div class="side-squares right-squares">
+        {% for i in range(4, 7) %}
+          {% set square = grid_squares[i] if i < grid_squares|length else None %}
+          {% if square %}
+          <div class="grid-square side-square {% if square.id == user_square.id %}my-square{% endif %}" 
+              data-id="{{ square.id }}" 
+              data-status="{{ square.status }}"
+              style="background-color: {% if square.status == 0 %}var(--color-red){% elif square.status == 1 %}var(--color-yellow){% else %}var(--color-green){% endif %}">
+            <div class="square-content">
+              <div class="square-name">{{ square.name }}</div>
+              <div class="status-text {% if square.status == 0 %}status-busy{% elif square.status == 1 %}status-almost{% else %}status-available{% endif %}">
+                {% if square.status == 0 %}Busy{% elif square.status == 1 %}Almost Ready{% else %}Available{% endif %}
+              </div>
+              {% if square.assigned_user %}
+              <div class="square-user">{{ square.assigned_user.username }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* U-shaped grid container */
+  .u-grid-container {
+    position: relative;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Top square */
+  .top-square {
+    width: 150px;
+    height: 150px;
+    margin-bottom: 30px;
+    z-index: 2;
+  }
+
+  /* Side containers - this is the new wrapper */
+  .side-containers {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  /* Side squares container */
+  .side-squares {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 150px;
+  }
+
+  /* Side squares */
+  .side-square {
+    width: 150px;
+    height: 150px;
+  }
+
+  /* Grid square styling */
+  .grid-square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    position: relative;
+  }
+
+  .grid-square:hover {
+    transform: scale(1.03);
+    z-index: 1;
+  }
+
+  /* Current user's square */
+  .my-square {
+    outline: 3px solid var(--color-blue);
+    outline-offset: -3px;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(67, 97, 238, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0); }
+  }
+
+ 
+  /* Responsive adjustments */
+@media (max-width: 768px) {
+    .u-grid-container {
+        padding: 15px;
+    }
+    
+    .top-square,
+    .side-square {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .side-squares {
+        width: 100px;
+        gap: 15px;
+    }
+    
+    .status-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .status-btn {
+        width: 150px;
+        margin-bottom: 5px;
+    }
+}
+
+@media (max-width: 600px) {
+    .side-containers {
+        flex-direction: row;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .side-squares {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .top-square {
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .side-containers {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .side-squares {
+        flex-direction: row;
+        width: 100%;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .top-square {
+        margin-bottom: 15px;
+    }
+    
+    .side-square {
+        width: 80px;
+        height: 80px;
+    }
+}
+</style>
+{% endblock %}
